@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: sorteio-1000
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sorteio-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        sync: false
+
+databases:
+  - name: sorteio-db
+    plan: free
