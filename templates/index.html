@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sorteio 1000</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>SORTEIO <span>1000</span></h1>
+    <p>Escolha seu número de 0001 a 1000</p>
+  </header>
+
+  <div class="premio-banner">☕ Premiação: Cafeteira</div>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="messages">
+        {% for msg in messages %}<div class="message">{{ msg }}</div>{% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <section class="card form-card">
+    <h2>Reservar número</h2>
+    <form method="post" action="{{ url_for('reservar') }}">
+      <label>Nome
+        <input name="nome" required minlength="2" maxlength="100" placeholder="Seu nome">
+      </label>
+      <label>WhatsApp / telefone
+        <input name="telefone" required inputmode="numeric" maxlength="15" placeholder="(65) 99999-9999">
+      </label>
+      <label>CPF
+        <input name="cpf" id="cpf" required inputmode="numeric" maxlength="14" placeholder="000.000.000-00">
+      </label>
+      <p class="nota-cpf">O CPF é usado apenas para evitar reservas duplicadas em nome de terceiros.</p>
+      <input type="hidden" name="numero" id="numero">
+      <div class="chosen">Número escolhido: <strong id="chosen">nenhum</strong></div>
+      <button type="submit" id="submit" disabled>Escolha um número</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="legend">
+      <span><i class="available"></i> Disponível</span>
+      <span><i class="occupied"></i> Reservado</span>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+</div>
+
+<script>
+const ocupados = new Set({{ ocupados|list|tojson }});
+const grid = document.getElementById("grid");
+const numeroInput = document.getElementById("numero");
+const chosen = document.getElementById("chosen");
+const submit = document.getElementById("submit");
+
+const cpfInput = document.getElementById("cpf");
+cpfInput.addEventListener("input", () => {
+  let v = cpfInput.value.replace(/\D/g, "").slice(0, 11);
+  if (v.length > 9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, "$1.$2.$3-$4");
+  else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{1,3})/, "$1.$2.$3");
+  else if (v.length > 3) v = v.replace(/(\d{3})(\d{1,3})/, "$1.$2");
+  cpfInput.value = v;
+});
+
+for (let n = 1; n <= 1000; n++) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "number " + (ocupados.has(n) ? "occupied" : "available");
+  b.textContent = String(n).padStart(4, "0");
+
+  if (ocupados.has(n)) {
+    b.disabled = true;
+    b.title = "Já reservado";
+  } else {
+    b.onclick = () => {
+      document.querySelectorAll(".number.selected").forEach(x => x.classList.remove("selected"));
+      b.classList.add("selected");
+      numeroInput.value = n;
+      chosen.textContent = String(n).padStart(4, "0");
+      submit.disabled = false;
+      submit.textContent = "Reservar " + String(n).padStart(4, "0");
+      window.scrollTo({top: 0, behavior: "smooth"});
+    };
+  }
+  grid.appendChild(b);
+}
+</script>
+</body>
+</html>
