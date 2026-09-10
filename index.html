@@ -1,0 +1,83 @@
+
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sorteio — Escolha seu número</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main class="wrap">
+  <section class="hero">
+    <div class="badge">🎁 SORTEIO</div>
+    <h1>Escolha seu número da sorte</h1>
+    <p>Selecione um número disponível de 0001 a 1000 e informe seu nome.</p>
+  </section>
+
+  <section class="card">
+    <div class="legend">
+      <span><i class="dot available"></i> Disponível</span>
+      <span><i class="dot taken"></i> Reservado</span>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+</main>
+
+<div class="modal hidden" id="modal">
+  <div class="modalbox">
+    <button class="close" onclick="closeModal()">×</button>
+    <h2>Número <span id="selected"></span></h2>
+    <p>Digite seu nome para confirmar a reserva.</p>
+    <input id="nome" maxlength="120" placeholder="Seu nome completo" autocomplete="name">
+    <button class="primary" onclick="reservar()">RESERVAR MEU NÚMERO</button>
+    <div id="msg"></div>
+  </div>
+</div>
+
+<script>
+const ocupados = new Set({{ ocupados|list|tojson }});
+let escolhido = null;
+
+function render(){
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  for(let i=1;i<=1000;i++){
+    const b = document.createElement('button');
+    b.className = 'num ' + (ocupados.has(i) ? 'taken' : 'available');
+    b.textContent = String(i).padStart(4,'0');
+    b.disabled = ocupados.has(i);
+    if(!b.disabled) b.onclick = () => openModal(i);
+    grid.appendChild(b);
+  }
+}
+function openModal(n){
+  escolhido=n;
+  document.getElementById('selected').textContent=String(n).padStart(4,'0');
+  document.getElementById('nome').value='';
+  document.getElementById('msg').textContent='';
+  document.getElementById('modal').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('nome').focus(),100);
+}
+function closeModal(){ document.getElementById('modal').classList.add('hidden'); }
+async function reservar(){
+  const nome=document.getElementById('nome').value.trim();
+  const msg=document.getElementById('msg');
+  if(nome.length<2){msg.textContent='Digite seu nome.';return;}
+  const r=await fetch('/reservar',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({numero:escolhido,nome})
+  });
+  const data=await r.json();
+  if(r.ok){
+    msg.className='ok'; msg.textContent='✅ '+data.mensagem;
+    ocupados.add(escolhido); render();
+    setTimeout(closeModal,1300);
+  }else{
+    msg.className='error'; msg.textContent='❌ '+data.mensagem;
+    if(r.status===409){ ocupados.add(escolhido); render(); }
+  }
+}
+render();
+</script>
+</body>
+</html>

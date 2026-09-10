@@ -1,0 +1,18 @@
+
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Painel — Sorteio</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body>
+<main class="admin">
+<header><div><h1>📋 Histórico do sorteio</h1><p><b>{{ total }}</b> de 1000 números reservados</p></div><a class="logout" href="/admin/logout">Sair</a></header>
+<div class="toolbar"><input id="busca" placeholder="Buscar por nome ou número..."><button onclick="location.reload()">Atualizar</button></div>
+<div class="tablewrap"><table><thead><tr><th>#</th><th>Número</th><th>Nome</th><th>Data e hora</th></tr></thead><tbody id="tbody">
+{% for r in rows %}<tr><td>{{ loop.index }}</td><td><b>{{ "%04d"|format(r.numero) }}</b></td><td>{{ r.nome }}</td><td>{{ r.horario }}</td></tr>{% endfor %}
+</tbody></table></div>
+</main>
+<script>
+document.getElementById('busca').addEventListener('input',e=>{
+ const q=e.target.value.toLowerCase();
+ document.querySelectorAll('#tbody tr').forEach(tr=>tr.style.display=tr.innerText.toLowerCase().includes(q)?'':'none');
+});
+</script>
+</body></html>
